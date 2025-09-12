@@ -1,0 +1,36 @@
+name: Make exercise and solution notebooks
+
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - 'src/**'
+
+jobs:
+  make_notebooks:
+    runs-on: ubuntu-latest
+    steps:
+    # https://github.com/actions/checkout
+    - name: Git checkout latest revision
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    # https://github.com/actions/setup-python
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Rebuild all final notebooks
+      run: |
+        python translation/make.py -r
+
+    - name: Commit any change
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add en fr solution-{en,fr}
+        MSG="Compilation de la révision ${{github.sha}}"
+        ! git diff --cached --quiet && git commit -m "$MSG" && git push || git status
